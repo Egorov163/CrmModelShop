@@ -17,6 +17,8 @@ namespace CrmBl.Model
         public List<Check> Checks { get; set; } = new List<Check>();
         public List<Sell> Sells { get; set; } = new List<Sell>();
         public Queue<Seller> Sellers { get; set; } = new Queue<Seller>();
+        public int CustomerSpeed { get; set; } = 100;
+        public int CashDeskSpeed { get; set; } = 100;
 
         public ShopComputerModel()
         {
@@ -31,16 +33,16 @@ namespace CrmBl.Model
 
             for (int i = 0; i < 3; i++)
             {
-                CashDesks.Add(new CashDesk(CashDesks.Count, Sellers.Dequeue()));
+                CashDesks.Add(new CashDesk(CashDesks.Count, Sellers.Dequeue(), null));
             }
         }
 
         public void Start()
         {
             isWorking = true;
-            Task.Run(() => CreateCarts(10, 1000));
+            Task.Run(() => CreateCarts(10));
 
-            var cashDeskTasks = CashDesks.Select(c => new Task(() => CashDeskWork(c, 1000)));
+            var cashDeskTasks = CashDesks.Select(c => new Task(() => CashDeskWork(c)));
 
             foreach (var task in cashDeskTasks)
             {
@@ -53,19 +55,19 @@ namespace CrmBl.Model
             isWorking = false;
         }
 
-        private void CashDeskWork(CashDesk cashDesk, int sleep)
+        private void CashDeskWork(CashDesk cashDesk)
         {
             while (isWorking)
             {
                 if (cashDesk.Count > 0)
                 {
                     cashDesk.Dequeue();
-                    Thread.Sleep(sleep);
+                    Thread.Sleep(CashDeskSpeed);
                 }
             }
         }
 
-        private void CreateCarts(int customerCounts, int sleep)
+        private void CreateCarts(int customerCounts)
         {
             while (isWorking)
             {
@@ -82,11 +84,11 @@ namespace CrmBl.Model
                         cart.Add(product);
                     }
 
-                    var cash = CashDesks[rnd.Next(CashDesks.Count - 1)];
+                    var cash = CashDesks[rnd.Next(CashDesks.Count)];
                     cash.Enqueue(cart);
                 }
 
-                Thread.Sleep(sleep);
+                Thread.Sleep(CustomerSpeed);
             }
         }
     }
